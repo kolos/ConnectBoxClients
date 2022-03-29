@@ -33,22 +33,30 @@ while (true)
     xml.LoadXml(result);
 
     Console.Clear();
-    Console.WriteLine($"MAC address\t\tspeed\tchange\tif.id\tinterface name");
+    Console.WriteLine($"MAC address\t\tspeed\tchange\tconnected to");
     foreach (XmlNode clientInfo in xml.SelectNodes("LanUserTable/*/clientinfo"))
     {
         var _mac = clientInfo.SelectSingleNode("MACAddr").InnerText;
         var _interface = clientInfo.SelectSingleNode("interface").InnerText;
-        var _interfaceid = clientInfo.SelectSingleNode("interfaceid").InnerText;
+        var _interfaceid = Convert.ToInt32(clientInfo.SelectSingleNode("interfaceid").InnerText);
         var _speed = Convert.ToInt32(clientInfo.SelectSingleNode("speed").InnerText);
+        var _connectedto = _interfaceid switch
+        {
+            _ when _interfaceid >= 3 && _interfaceid <= 18 => "Wi-Fi 2.4G",
+            _ when _interfaceid >= 19 && _interfaceid <= 34 => "Wi-Fi 5G",
+            _ => _interface
+        };
 
         if(rates.ContainsKey(_mac))
         {
-            Console.WriteLine($"{_mac}\t{_speed}\t{(_speed - rates[_mac]).ToString("+#;-#;0")}\t{_interfaceid}\t{_interface}");
+            Console.WriteLine($"{_mac}\t{_speed}\t{(_speed - rates[_mac]).ToString("+#;-#;0")}\t{_connectedto}");
         } else
         {
-            Console.WriteLine($"{_mac}\t{_speed}\t\t{_interfaceid}\t{_interface}");
+            Console.WriteLine($"{_mac}\t{_speed}\t\t{_connectedto}");
         }
         rates[_mac] = _speed;
     }
+
+    Console.WriteLine($"\nclients connected: {xml.SelectSingleNode("LanUserTable/totalClient").InnerText}");
     Thread.Sleep(5 * 1000);
 }
