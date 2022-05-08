@@ -7,25 +7,24 @@ string login_url = $"http://{addr}/common_page/login.html";
 string getter_url = $"http://{addr}/xml/getter.xml";
 string setter_url = $"http://{addr}/xml/setter.xml";
 
-
-Func<HttpClientHandler, string> GetToken = handler => handler.CookieContainer.GetCookies(new Uri(login_url)).First(x => x.Name == "sessionToken").Value;
 HttpClientHandler handler = new HttpClientHandler()
 {
     CookieContainer = new(),
-    AllowAutoRedirect = false,
+    AllowAutoRedirect = false,  
 };
 
 var httpClient = new HttpClient(handler);
 httpClient.DefaultRequestHeaders.Add("User-Agent", "Chrome");
+httpClient.DefaultRequestHeaders.Add("Referer", $"http://{addr}");
 
 await httpClient.GetAsync(login_url);
-await httpClient.PostAsync(setter_url, new StringContent($"token={GetToken(handler)}&fun=15&Username=NULL&Password={password}"));
+await httpClient.PostAsync(setter_url, new StringContent($"fun=15&Username=admin&Password={password}"));
 
 Dictionary<string, int> rates = new();
 
 while (true)
 {
-    var response = await httpClient.PostAsync(getter_url, new StringContent($"token={GetToken(handler)}&fun=123"));
+    var response = await httpClient.PostAsync(getter_url, new StringContent($"fun=123"));
 
     string result = response.Content.ReadAsStringAsync().Result;
     if (result == "") continue;
