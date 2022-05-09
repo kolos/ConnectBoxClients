@@ -1,4 +1,5 @@
-﻿using System.Xml;
+﻿using System.Net;
+using System.Xml;
 
 string addr = "192.168.1.1";
 string password = "your password here";
@@ -10,7 +11,7 @@ string setter_url = $"http://{addr}/xml/setter.xml";
 HttpClientHandler handler = new HttpClientHandler()
 {
     CookieContainer = new(),
-    AllowAutoRedirect = false,  
+    AllowAutoRedirect = false,
 };
 
 var httpClient = new HttpClient(handler);
@@ -18,7 +19,14 @@ httpClient.DefaultRequestHeaders.Add("User-Agent", "Chrome");
 httpClient.DefaultRequestHeaders.Add("Referer", $"http://{addr}");
 
 await httpClient.GetAsync(login_url);
-await httpClient.PostAsync(setter_url, new StringContent($"fun=15&Username=admin&Password={password}"));
+var login_response = await httpClient.PostAsync(setter_url, new StringContent($"fun=15&Username=admin&Password={password}"));
+string login_result = login_response.Content.ReadAsStringAsync().Result;
+if (!login_result.StartsWith("successful"))
+{
+    Console.WriteLine("Unsuccessful login.");
+    return;
+}
+handler.CookieContainer.Add(new Uri($"http://{addr}"), new Cookie("SID", login_result[15..]));
 
 Dictionary<string, int> rates = new();
 
